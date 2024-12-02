@@ -12,6 +12,11 @@ def get_mec(G_cpdag):
     
     return mec
 
+def get_undirected_edges_pdag(G, verbose=False):
+    frozenset_set = G.edges
+    tuple_set = {tuple(item) for item in frozenset_set}
+    return tuple_set
+
 def get_undirected_edges(true_G, verbose=False):
 
     dag = DAG.from_nx(true_G)

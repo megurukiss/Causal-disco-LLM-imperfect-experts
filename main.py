@@ -18,6 +18,7 @@ from utils.data_generation import generate_dataset
 from utils.dag_utils import get_undirected_edges, is_dag_in_mec, get_mec
 from utils.metrics import get_mec_shd
 from utils.language_models import get_lms_probs, temperature_scaling
+from utils.CI_utils import load_data_from_file, save_data_to_file, data2pdag
 
 parser = argparse.ArgumentParser(description='Description of your program.')
 
@@ -27,6 +28,7 @@ parser.add_argument('--dataset', default="child", type=str, help='What dataset t
 parser.add_argument('--tabular', default=False, action="store_true", help='Use tabular expert, else use gpt3')
 parser.add_argument('--prior', default="mec", choices=["mec", "independent"])
 parser.add_argument('--probability', default="posterior", choices=["posterior", "prior", "likelihood"])
+parser.add_argument('--preprocess',default=True)
 
 parser.add_argument('--wandb-project', default='noisy expert', type=str, help='Name of your wandb project')
 parser.add_argument('--llm-engine', default='text-davinci-002')
@@ -91,8 +93,21 @@ if __name__ == '__main__':
 
     print(args)
 
-    true_G, _ = generate_dataset('_raw_bayesian_nets/' + args.dataset + '.bif')
-    cpdag = DAG.from_nx(true_G).cpdag()
+    true_G, data = generate_dataset('_raw_bayesian_nets/' + args.dataset + '.bif')
+    
+    if args.preprocess:
+        # use pc and ges to generate the cpdag
+        # try load data
+        try:
+            data = load_data_from_file('./' + args.dataset+'_data' + '.pkl')
+        except:
+            # save data
+            save_data_to_file(data, './' + args.dataset+'_data' + '.pkl')
+        
+        cpdag = data2pdag(data)
+
+    else:
+        cpdag = DAG.from_nx(true_G).cpdag()
 
     undirected_edges = get_undirected_edges(true_G, verbose=args.verbose)
 
